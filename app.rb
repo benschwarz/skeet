@@ -23,7 +23,7 @@ class Skeet < Sinatra::Base
       settings.cache.set(cache_key, encoded_image)
     end
     
-    "data:image/jpeg;base64," + encoded_image
+    send_data(("data:image/jpeg;base64," + encoded_image), type: "application/base64", disposition: "inline")
   end
   
   get '/cache-stats' do
