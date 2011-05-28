@@ -24,7 +24,7 @@ class Skeet < Sinatra::Base
     
     unless cached_image
       image = IMGKit.new(params[:url]).to_img
-      settings.cache.set(cache_key, Base64.encode64(image.to_img))
+      settings.cache.set(cache_key, Base64.encode64(image))
     else
       image = Base64.decode64(cached_image)
     end
