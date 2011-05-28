@@ -15,6 +15,8 @@ class Skeet < Sinatra::Base
   end
   
   get '/' do
+    cache_control :public, :max_age => 36000
+    
     headers({
       'Content-Disposition' => 'inline',
       'Content-Type' => 'image/jpeg'
