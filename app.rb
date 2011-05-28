@@ -15,15 +15,21 @@ class Skeet < Sinatra::Base
   end
   
   get '/' do
-    encoded_image = settings.cache.get(cache_key)
+    headers({
+      'Content-Disposition' => 'inline',
+      'Content-Type' => 'image/jpeg'
+    })
     
-    unless encoded_image
-      image = IMGKit.new(params[:url])
-      encoded_image = Base64.encode64(image.to_img)
-      settings.cache.set(cache_key, encoded_image)
+    cached_image = settings.cache.get(cache_key)
+    
+    unless cached_image
+      image = IMGKit.new(params[:url]).to_img
+      settings.cache.set(cache_key, Base64.encode64(image.to_img))
+    else
+      image = Base64.decode64(cached_image)
     end
-    
-    send_file(("data:image/jpeg;base64," + encoded_image), type: "application/base64", disposition: "inline")
+
+    image
   end
   
   get '/cache-stats' do
