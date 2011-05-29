@@ -14,7 +14,7 @@ class Skeet < Sinatra::Base
   end
   
   get '/*' do
-    expires 1600, :public, :must_revalidate
+    expires 1600, :public, :proxy_revalidate
     halt unless valid_uri?(params[:splat].join)
 
     headers({
