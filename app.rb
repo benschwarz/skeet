@@ -13,6 +13,10 @@ class Skeet < Sinatra::Base
     set :cache, Dalli::Client.new
   end
   
+  get '/cache-stats' do
+    settings.cache.stats.to_s
+  end
+  
   get '/*' do
     expires 1600, :public, :proxy_revalidate
     halt unless valid_uri?(params[:splat].join)
@@ -36,10 +40,6 @@ class Skeet < Sinatra::Base
     end
 
     image
-  end
-  
-  get '/cache-stats' do
-    settings.cache.stats.to_s
   end
   
   private
