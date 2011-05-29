@@ -5,8 +5,8 @@ require 'digest/md5'
 class Skeet < Sinatra::Base
   configure do
     IMGKit.configure do |config|
-      # config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage-amd64')
-      config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage')
+      config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage-amd64')
+      # config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage')
       config.default_options = { quality: 100 }
     end
     
