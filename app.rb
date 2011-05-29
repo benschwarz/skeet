@@ -6,16 +6,16 @@ class Skeet < Sinatra::Base
     IMGKit.configure do |config|
       config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage-amd64')
       # config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage')
-      config.default_options = {
-        quality: 75
-      }
+      config.default_options = { quality: 100 }
     end
     
     set :cache, Dalli::Client.new
+    set :max_image_width, 300
   end
   
-  get '/' do
-    halt unless valid_uri?(params[:url])
+  get '/*' do
+    expires 1600
+    halt unless valid_uri?(params[:splat].join)
 
     headers({
       'Content-Disposition' => 'inline',
@@ -24,13 +24,17 @@ class Skeet < Sinatra::Base
     
     cached_image = settings.cache.get(cache_key)
     
-    unless cached_image
-      image = IMGKit.new(params[:url]).to_img
-      resize = Image.from_blob(image).resize_to_fit(dimension, dimension)
-      
-      settings.cache.set(cache_key, Base64.encode64(resize)
-    else
+    if cached_image
       image = Base64.decode64(cached_image)
+    else
+      image = IMGKit.new(params[:splat].join).to_img
+      resize = Magick::Image.from_blob(image).first.change_geometry("#{dimension}x") do |cols, rows, img|
+        img.resize!(cols, rows)
+      end
+      
+      image = resize.to_blob
+      
+      settings.cache.set(cache_key, Base64.encode64(image))
     end
 
     image
@@ -42,14 +46,14 @@ class Skeet < Sinatra::Base
   
   private
   def dimension
-    dimension = params[:dimension] || 300
-    return 300 if dimension.to_i > 300
+    dimension = params[:dimension] || settings.max_image_width
+    return settings.max_image_width if dimension.to_i > settings.max_image_width
     
     dimension
   end
   
   def cache_key
-    Digest::MD5.hexdigest(params[:url])
+    Digest::MD5.hexdigest(params[:splat].join)
   end
   
   def valid_uri?(uri)
