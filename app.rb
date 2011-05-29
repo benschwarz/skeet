@@ -1,6 +1,3 @@
-require 'base64'
-require 'digest/md5'
-
 class Skeet < Sinatra::Base
   configure do
     IMGKit.configure do |config|
@@ -22,33 +19,19 @@ class Skeet < Sinatra::Base
       'Content-Type' => 'image/jpeg'
     })
     
-    cached_image = settings.cache.get(cache_key)
-    
-    if cached_image
-      image = Base64.decode64(cached_image)
-    else
-      image = IMGKit.new(params[:splat].join).to_img
-      resize = Magick::Image.from_blob(image).first.change_geometry("300x") do |cols, rows, img|
-        img.resize!(cols, rows)
-      end
-      
-      image = resize.to_blob
-      
-      settings.cache.set(cache_key, Base64.encode64(image))
+    image = IMGKit.new(params[:splat].join).to_img
+    resize = Magick::Image.from_blob(image).first.change_geometry("300x") do |cols, rows, img|
+      img.resize!(cols, rows)
     end
-
-    image
+    
+    resize.to_blob
   end
   
   get '/cache-stats' do
     settings.cache.stats.to_s
   end
   
-  private
-  def cache_key
-    Digest::MD5.hexdigest(params[:splat].join)
-  end
-  
+  private  
   def valid_uri?(uri)
     uri.match(/(^$)|(^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)/ix)
   end
