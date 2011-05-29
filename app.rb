@@ -1,4 +1,6 @@
 require 'magick/crop_resized'
+require 'base64'
+require 'digest/md5'
 
 class Skeet < Sinatra::Base
   configure do
@@ -9,7 +11,6 @@ class Skeet < Sinatra::Base
     end
     
     set :cache, Dalli::Client.new
-    set :max_image_width, 300
   end
   
   get '/*' do
@@ -21,16 +22,31 @@ class Skeet < Sinatra::Base
       'Content-Type' => 'image/jpeg'
     })
     
-    image = IMGKit.new(params[:splat].join).to_img
-    resize = Magick::Image.from_blob(image).first.crop_resized!(300, 300, Magick::NorthWestGravity)
-    resize.to_blob
+    cached_image = settings.cache.get(cache_key)
+    
+    if cached_image
+      image = Base64.decode64(cached_image)
+    else
+      image = IMGKit.new(params[:splat].join).to_img
+      resize = Magick::Image.from_blob(image).first.crop_resized!(300, 300, Magick::NorthWestGravity)
+      
+      image = resize.to_blob
+      
+      settings.cache.set(cache_key, Base64.encode64(image))
+    end
+
+    image
   end
   
   get '/cache-stats' do
     settings.cache.stats.to_s
   end
   
-  private  
+  private
+  def cache_key
+    Digest::MD5.hexdigest(params[:splat].join)
+  end
+  
   def valid_uri?(uri)
     uri.match(/(^$)|(^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)/ix)
   end
