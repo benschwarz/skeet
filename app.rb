@@ -28,7 +28,7 @@ class Skeet < Sinatra::Base
       image = Base64.decode64(cached_image)
     else
       image = IMGKit.new(params[:splat].join).to_img
-      resize = Magick::Image.from_blob(image).first.change_geometry("#{dimension}x") do |cols, rows, img|
+      resize = Magick::Image.from_blob(image).first.change_geometry("300x") do |cols, rows, img|
         img.resize!(cols, rows)
       end
       
@@ -45,13 +45,6 @@ class Skeet < Sinatra::Base
   end
   
   private
-  def dimension
-    dimension = params[:dimension] || settings.max_image_width
-    return settings.max_image_width if dimension.to_i > settings.max_image_width
-    
-    dimension
-  end
-  
   def cache_key
     Digest::MD5.hexdigest(params[:splat].join)
   end
