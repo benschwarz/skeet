@@ -1,8 +1,10 @@
+require 'magick/crop_resized'
+
 class Skeet < Sinatra::Base
   configure do
     IMGKit.configure do |config|
-      config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage-amd64')
-      # config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage')
+      # config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage-amd64')
+      config.wkhtmltoimage = File.join(File.dirname(__FILE__), 'bin', 'wkhtmltoimage')
       config.default_options = { quality: 100 }
     end
     
@@ -20,10 +22,7 @@ class Skeet < Sinatra::Base
     })
     
     image = IMGKit.new(params[:splat].join).to_img
-    resize = Magick::Image.from_blob(image).first.change_geometry("300x") do |cols, rows, img|
-      img.resize!(cols, rows)
-    end
-    
+    resize = Magick::Image.from_blob(image).first.crop_resized!(300, 300, Magick::NorthWestGravity)
     resize.to_blob
   end
   
